@@ -1,0 +1,4 @@
+batch_query_manage/*
+arxiv_abstracts/*
+__pycache__
+config.json
