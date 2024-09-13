@@ -196,6 +196,7 @@ def batch_manage_llm_fetch(config_file: str):
         batch_info_completed = json.load(f)
 
     removed_batch_ids = []
+    num_new_completed, num_in_progress ,num_new_failed = 0, 0, 0
     for batch_id, batch_data in batch_info.items():
         status, response = llm_summary_fetch(api_key=api_key, batch_id=batch_id)
         if status == 'completed':
@@ -209,6 +210,7 @@ def batch_manage_llm_fetch(config_file: str):
                     "retrieved_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }
             )
+            num_new_completed += 1
             removed_batch_ids.append(batch_id)
         elif status in ['failed', 'expired', 'cancelling', 'cancelled']:
             with open('batch_query_manage/batch_query_manage_failed.json', 'r') as f:
@@ -219,10 +221,12 @@ def batch_manage_llm_fetch(config_file: str):
                     "status": status,
                     "retrieved_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }
+            num_new_failed += 1
             removed_batch_ids.append(batch_id)
             with open('batch_query_manage/batch_query_manage_failed.json', 'w') as f:
                 json.dump(batch_info_failed, f)
         else:
+            num_in_progress += 1
             print(f'Batch {batch_id} is still in progress: {status}')
     
     for batch_id in removed_batch_ids:
@@ -234,3 +238,4 @@ def batch_manage_llm_fetch(config_file: str):
     with open(BATCH_INFO_MANAGE_COMPLETED_FILE, 'w') as f:
         json.dump(batch_info_completed, f)
 
+    return num_new_completed, num_in_progress, num_new_failed
